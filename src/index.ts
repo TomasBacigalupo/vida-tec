@@ -19,9 +19,9 @@ let account: Account = null;
 
 const mutex = new Mutex();
 
-// define a route handler for the default home page
+// default home page
 server.get( "/", ( req, res ) => {
-    res.send( "Hello world!");
+    res.send( "Welcome to aaccount service");
 } );
 
 server.post("/account", (req, res)=>{
