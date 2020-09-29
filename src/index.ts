@@ -14,9 +14,6 @@ const server = express();
 server.use(bodyParser.json());
 
 const port = 8080; // default port to listen
-
-let balance = 4000
-const moves: Move[] = [];
 let account: Account = null;
 
 
@@ -36,9 +33,7 @@ server.get("/account/owner", (req, res)=>{
     }else{
         res.type('json').status(200).json(account);
     }
-
 });
-
 
 server.get("/account/owner/balance",(req, res) =>{
     if(account === null){
@@ -48,31 +43,37 @@ server.get("/account/owner/balance",(req, res) =>{
     }
 });
 
-server.put("account/owner/debit",(req, res) =>{
-    if(req.body.value <= 0 ){
-        res.send(new StatusBadRequest("monto mayor a 0"));
-
+server.get("/account/owner/moves", (req, res)=>{
+    if(account === null){
+        res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
     }else{
-        account.debit(req.body.value);
-        res.send(new StatusOk("dinero depositado"));
+        res.type('json').status(200).json(account.moves);
     }
 
-})
-
-server.get("account/owner/moves", (req, res)=>{
-    res.send(account.moves);
 });
 
-server.put("account/owner/extract", (req, res)=>{
-    const value = req.body.value;
-    if(value <= 0){
-        res.send(new StatusBadRequest("la extraccion debe ser mayor a 0"));
-    }else if(balance < value){
-        res.send(new StatusOk("no hay suficiente dinero"));
+server.put("/account/owner/debit",(req, res) =>{
+    if(account === null){
+        res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
+    }else if(req.body.value <= 0 ){
+        res.type('json').status(500).json(new StatusBadRequest("monto mayor a 0"));
     }else{
-        balance  = balance- value;
-        moves.push(new Extraction(value));
-        res.send(new StatusOk("dinero extraido"))
+        account.debit(req.body.value);
+        res.type('json').status(200).json(new StatusOk("dinero depositado"));
+    }
+});
+
+server.put("/account/owner/extract", (req, res)=>{
+    const value = req.body.value;
+    if(account === null){
+        res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
+    }else if(value <= 0){
+        res.type('json').status(500).json(new StatusBadRequest("la extraccion debe ser mayor a 0"));
+    }else if(account.balance < value){
+        res.type('json').status(409).json(new StatusConflict("no hay suficiente dinero"));
+    }else{
+        account.extract(value)
+        res.type('json').status(200).json(new StatusOk("dinero extraido"))
     }
 })
 
