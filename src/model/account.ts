@@ -5,7 +5,7 @@ import { Move } from "./move";
 export class Account{
     balance:number;
     owner:string;
-    moves: Move[];
+    moves: Move[] = [];
 
     constructor(startBalance:number, owner:string){
         this.balance = startBalance;
@@ -25,6 +25,5 @@ export class Account{
             this.balance += value;
         }
     }
-
 
 }
