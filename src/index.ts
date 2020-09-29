@@ -26,7 +26,8 @@ server.get( "/", ( req, res ) => {
 } );
 
 server.post("/account", (req, res)=>{
-    account = new Account(req.body.startBalance, req.body.owner);
+    const { startBalance, owner } = req.body;
+    account = new Account(startBalance, owner);
     res.type('json').status(201).json(account);
 });
 
@@ -56,42 +57,47 @@ server.get("/account/owner/moves", (req, res)=>{
 });
 
 server.put("/account/owner/debit", async (req, res) =>{
-    // lock
-    const release = await mutex.acquire();
-    try {
-        if(account === null){
-            res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
-        }else if(req.body.value <= 0 ){
-            res.type('json').status(500).json(new StatusBadRequest("monto mayor a 0"));
-        }else{
-            account.debit(req.body.value);
-            res.type('json').status(200).json(new StatusOk("dinero depositado"));
+
+    if(account === null){
+        res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
+    }else if(req.body.value <= 0 ){
+        res.type('json').status(500).json(new StatusBadRequest("monto mayor a 0"));
+    }else{
+        // lock
+        const release = await mutex.acquire();
+        try {
+        account.debit(req.body.value);
+        res.type('json').status(200).json(new StatusOk("dinero depositado"));
+        } finally {
+            release();
         }
-    } finally {
-        release();
+        // unlock
     }
-    // unlock
 });
 
 server.put("/account/owner/extract", async (req, res) => {
-    // lock
-    const release = await mutex.acquire();
-    try {
+
         const value = req.body.value;
         if(account === null){
             res.type('json').status(409).json(new StatusConflict("no hay cuenta creada"));
         }else if(value <= 0){
             res.type('json').status(500).json(new StatusBadRequest("la extraccion debe ser mayor a 0"));
-        }else if(account.balance < value){
-            res.type('json').status(409).json(new StatusConflict("no hay suficiente dinero"));
         }else{
-            account.extract(value)
-            res.type('json').status(200).json(new StatusOk("dinero extraido"))
+            // lock
+            const release = await mutex.acquire();
+            try {
+                if(account.balance < value){
+                    res.type('json').status(409).json(new StatusConflict("no hay suficiente dinero"));
+                }else{
+                    account.extract(value)
+                    res.type('json').status(200).json(new StatusOk("dinero extraido"))
+                }
+
+            } finally {
+                release();
+            }
+            // unlock
         }
-    } finally {
-        release();
-    }
-    // unlock
 
 })
 
