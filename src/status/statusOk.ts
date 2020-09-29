@@ -1,4 +1,6 @@
-class StatusOk implements Error{
+import { Status } from "./status";
+
+class StatusOk implements Status{
     name:string;
     message:string;
     code = 200;

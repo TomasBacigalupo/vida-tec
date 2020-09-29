@@ -1,5 +1,6 @@
-class StatusBadRequest implements Error{
-    name:string;
+import { Status } from "./status";
+
+class StatusBadRequest implements Status{
     message:string;
     code:400
 
