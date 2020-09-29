@@ -21,7 +21,7 @@ const mutex = new Mutex();
 
 // default home page
 server.get( "/", ( req, res ) => {
-    res.send( "Welcome to aaccount service");
+    res.send( "Welcome to account service");
 } );
 
 server.post("/account", (req, res)=>{
